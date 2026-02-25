@@ -1,0 +1,32 @@
+#include <SPI.h>
+#include <nRF24L01.h>
+#include <RF24.h>
+
+RF24 radio(9, 10); // CE, CSN pins
+const byte address[6] = "Nyx01";
+
+struct Data_Package {
+  byte throttle;
+  byte yaw;
+  byte pitch;
+  byte roll;
+};
+Data_Package data;
+
+void setup() {
+  radio.begin();
+  radio.openWritingPipe(address);
+  radio.setPALevel(RF24_PA_MAX);
+  radio.stopListening();
+}
+
+void loop() {
+  // Mapping 0-1023 joystick range to 0-255 byte range
+  data.throttle = map(analogRead(A0), 0, 1023, 0, 255);
+  data.yaw      = map(analogRead(A1), 0, 1023, 0, 255);
+  data.pitch    = map(analogRead(A2), 0, 1023, 0, 255);
+  data.roll     = map(analogRead(A3), 0, 1023, 0, 255);
+
+  radio.write(&data, sizeof(Data_Package));
+  delay(10); // 100Hz transmission rate
+}
